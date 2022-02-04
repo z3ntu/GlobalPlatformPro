@@ -106,6 +106,7 @@ abstract class GPCommandLineInterface {
     protected final static String OPT_ACR_DELETE = "acr-delete";
     protected final static String OPT_ACR_RULE = "acr-rule";
     protected final static String OPT_ACR_CERT_HASH = "acr-hash";
+    protected final static String OPT_ACR_PERM = "acr-perm";
     // Delegated management
     protected final static String OPT_DM_KEY = "dm-key";
     protected final static String OPT_DM_TOKEN = "dm-token";
@@ -210,6 +211,7 @@ abstract class GPCommandLineInterface {
         parser.accepts(OPT_ACR_DELETE, "Delete an access rule");
         parser.accepts(OPT_ACR_RULE, "Access control rule (can be 0x00(NEVER),0x01(ALWAYS) or an APDU filter").withRequiredArg();
         parser.accepts(OPT_ACR_CERT_HASH, "Certificate hash").withRequiredArg().describedAs("SHA1");
+        parser.accepts(OPT_ACR_PERM, "Permissions").withOptionalArg().describedAs("bytes");
 
         // General GP options
         parser.accepts(OPT_SC_MODE, "Secure channel to use (mac/enc/clr)").withRequiredArg().describedAs("mac/enc/clr");

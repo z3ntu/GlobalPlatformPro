@@ -100,21 +100,17 @@ public class SEAccessControl {
     }
 
     private static BerTlv buildArDoData(final ApduArDo apduArDo, final NfcArDo nfcArDo, final PermArDo permArDo) {
-        if (apduArDo != null && nfcArDo == null) {
-            return apduArDo.toTlv();
+        BerTlvBuilder builder = new BerTlvBuilder();
+        if (apduArDo != null) {
+            builder.addBerTlv(apduArDo.toTlv());
         }
-        if (apduArDo == null && nfcArDo != null) {
-            return nfcArDo.toTlv();
+        if (nfcArDo != null) {
+            builder.addBerTlv(nfcArDo.toTlv());
         }
-        // FIXME permArDo conditions above?
-        if (apduArDo != null && nfcArDo != null && permArDo != null) {
-            return new BerTlvBuilder()
-                    .addBerTlv(apduArDo.toTlv())
-                    .addBerTlv(nfcArDo.toTlv())
-                    .addBerTlv(permArDo.toTlv())
-                    .buildTlv();
+        if (permArDo != null) {
+            builder.addBerTlv(permArDo.toTlv());
         }
-        return null;
+        return builder.buildTlv();
     }
 
     private static byte[] buildApduArDoData(final EventAccessRules rule, final byte[] filter) {
@@ -388,9 +384,13 @@ public class SEAccessControl {
             this.arDo = arDo;
         }
 
-        public RefArDo(final AID aid, final byte[] hash, final byte[] rules) {
+        public RefArDo(final AID aid, final byte[] hash, final byte[] rules, final byte[] perm) {
             this.refDo = new RefDo(new AidRefDo(aid == null ? new byte[0] : aid.getBytes()), new HashRefDo(hash == null ? new byte[0] : hash));
-            this.arDo = new ArDo(new ApduArDo(rules), null, null);
+            PermArDo permArDo = null;
+            if (perm != null) {
+                permArDo = new PermArDo(perm);
+            }
+            this.arDo = new ArDo(new ApduArDo(rules), null, permArDo);
         }
 
         @Override

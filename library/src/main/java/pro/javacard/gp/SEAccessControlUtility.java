@@ -81,8 +81,8 @@ public final class SEAccessControlUtility {
     /*
      * Add an access rule.
      */
-    public static void acrAdd(final GPSession gp, final AID araAid, final AID aid, final byte[] hash, final byte[] rules) throws IOException, GPException {
-        SEAccessControl.RefArDo refArDo = new SEAccessControl.RefArDo(aid, hash, rules);
+    public static void acrAdd(final GPSession gp, final AID araAid, final AID aid, final byte[] hash, final byte[] rules, final byte[] perm) throws IOException, GPException {
+        SEAccessControl.RefArDo refArDo = new SEAccessControl.RefArDo(aid, hash, rules, perm);
         SEAccessControl.StoreArDo storeArDo = new SEAccessControl.StoreArDo(refArDo);
         acrStore(gp, araAid, storeArDo.toTlv());
     }
@@ -110,7 +110,7 @@ public final class SEAccessControlUtility {
         BerTlv request;
 
         if (hash != null) {
-            SEAccessControl.RefArDo refArDo = new SEAccessControl.RefArDo(aid, hash, null);
+            SEAccessControl.RefArDo refArDo = new SEAccessControl.RefArDo(aid, hash, null, null);
             request = new SEAccessControl.DeleteArDo(refArDo).toTlv();
         } else if (aid != null) {
             SEAccessControl.AidRefDo aidRefDo = new SEAccessControl.AidRefDo(aid.getBytes());
