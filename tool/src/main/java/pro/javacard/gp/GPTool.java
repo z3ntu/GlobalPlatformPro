@@ -581,7 +581,7 @@ public final class GPTool extends GPCommandLineInterface {
 
                     AID aid = null;
                     if (args.has(OPT_APPLET)) {
-                        aid = AID.fromString(OPT_APPLET);
+                        aid = AID.fromString(args.valueOf(OPT_APPLET));
                     }
 
                     byte[] hash = null;
