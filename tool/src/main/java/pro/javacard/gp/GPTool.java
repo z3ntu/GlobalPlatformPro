@@ -554,6 +554,7 @@ public final class GPTool extends GPCommandLineInterface {
                     }
                 }
 
+                // --acr-add
                 if (args.has(OPT_ACR_ADD)) {
                     AID aid = null;
                     byte[] hash = null;

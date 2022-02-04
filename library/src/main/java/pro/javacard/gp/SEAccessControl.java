@@ -63,6 +63,7 @@ public class SEAccessControl {
     private final static byte NFC_AR_DO = (byte) 0xD1;
     // Google extensions
     private final static byte GOOGLE_PKG_DO = (byte) 0xCA;
+    private final static byte PERM_AR_DO = (byte) 0xDB;
 
     //command message data object (p38 Secure Element Access control spec v1.0)
     private final static byte STORE_AR_DO = (byte) 0xF0;
@@ -98,15 +99,20 @@ public class SEAccessControl {
         ACR_GET_DATA_ERROR = Collections.unmodifiableMap(tmp);
     }
 
-    private static BerTlv buildArDoData(final ApduArDo apduArDo, final NfcArDo nfcArDo) {
+    private static BerTlv buildArDoData(final ApduArDo apduArDo, final NfcArDo nfcArDo, final PermArDo permArDo) {
         if (apduArDo != null && nfcArDo == null) {
             return apduArDo.toTlv();
         }
         if (apduArDo == null && nfcArDo != null) {
             return nfcArDo.toTlv();
         }
-        if (apduArDo != null && nfcArDo != null) {
-            return new BerTlvBuilder().addBerTlv(apduArDo.toTlv()).addBerTlv(nfcArDo.toTlv()).buildTlv();
+        // FIXME permArDo conditions above?
+        if (apduArDo != null && nfcArDo != null && permArDo != null) {
+            return new BerTlvBuilder()
+                    .addBerTlv(apduArDo.toTlv())
+                    .addBerTlv(nfcArDo.toTlv())
+                    .addBerTlv(permArDo.toTlv())
+                    .buildTlv();
         }
         return null;
     }
@@ -182,7 +188,8 @@ public class SEAccessControl {
         if (arDo != null) {
             ApduArDo apduArDo = parseApduArDo(arDo.find(new BerTag(APDU_AR_DO)));
             NfcArDo nfcArDo = parseNfcArDo(arDo.find(new BerTag(NFC_AR_DO)));
-            return new ArDo(apduArDo, nfcArDo);
+            PermArDo permArDo = parsePermArDo(arDo.find(new BerTag(PERM_AR_DO)));
+            return new ArDo(apduArDo, nfcArDo, permArDo);
         }
         return null;
     }
@@ -227,6 +234,19 @@ public class SEAccessControl {
     }
 
     /*
+     * Parse PERM_AR_DO
+     * <p>
+     * DB | 01 | 0x00 or 0x01
+     */
+    public static PermArDo parsePermArDo(final BerTlv permArDo) throws GPDataException {
+        if (permArDo != null) {
+            byte[] data = permArDo.getBytesValue();
+            return new PermArDo(data);
+        }
+        return null;
+    }
+
+    /*
      * Print ACR list response.
      */
     public static void printList(final List<RefArDo> acrList) {
@@ -250,6 +270,9 @@ public class SEAccessControl {
                 }
                 if (r.arDo.nfcArDo != null) {
                     System.out.println("       NFC  rule   : " + r.arDo.nfcArDo.rule + "(" + String.format("0x%02X", r.arDo.nfcArDo.rule.getValue()) + ")");
+                }
+                if (r.arDo.permArDo != null) {
+                    System.out.println("       PERM : " + r.arDo.permArDo);
                 }
             }
         }
@@ -367,7 +390,7 @@ public class SEAccessControl {
 
         public RefArDo(final AID aid, final byte[] hash, final byte[] rules) {
             this.refDo = new RefDo(new AidRefDo(aid == null ? new byte[0] : aid.getBytes()), new HashRefDo(hash == null ? new byte[0] : hash));
-            this.arDo = new ArDo(new ApduArDo(rules), null);
+            this.arDo = new ArDo(new ApduArDo(rules), null, null);
         }
 
         @Override
@@ -487,20 +510,22 @@ public class SEAccessControl {
 
         final ApduArDo apduArDo;
         final NfcArDo nfcArDo;
+        final PermArDo permArDo;
 
-        public ArDo(final ApduArDo apduArDo, final NfcArDo nfcArDo) {
+        public ArDo(final ApduArDo apduArDo, final NfcArDo nfcArDo, final PermArDo permArDo) {
             this.apduArDo = apduArDo;
             this.nfcArDo = nfcArDo;
+            this.permArDo = permArDo;
         }
 
         public String toString() {
-            return "apdu : " + apduArDo + " | nfc : " + nfcArDo;
+            return "apdu : " + apduArDo + " | nfc : " + nfcArDo + " | perm : " + permArDo;
         }
 
         @Override
         public BerTlv toTlv() {
             return new BerTlvBuilder(new BerTag(AR_DO))
-                    .addBerTlv(buildArDoData(apduArDo, nfcArDo))
+                    .addBerTlv(buildArDoData(apduArDo, nfcArDo, permArDo))
                     .buildTlv();
         }
     }
@@ -573,6 +598,32 @@ public class SEAccessControl {
 
         public String toString() {
             return "rule : " + rule;
+        }
+    }
+
+    /**
+     * PERM-AR-DO access rule data object.
+     */
+    public static class PermArDo implements ITLV {
+
+        final byte[] data;
+
+        public PermArDo(final byte[] data) {
+            if (data.length != 8) {
+                throw new IllegalArgumentException("len must be 8");
+            }
+            this.data = data;
+        }
+
+        @Override
+        public BerTlv toTlv() {
+            return new BerTlvBuilder()
+                    .addBytes(new BerTag(PERM_AR_DO), data)
+                    .buildTlv();
+        }
+
+        public String toString() {
+            return HexUtils.bin2hex(data);
         }
     }
 
