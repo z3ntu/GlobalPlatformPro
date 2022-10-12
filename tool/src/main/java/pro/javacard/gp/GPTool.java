@@ -571,8 +571,8 @@ public final class GPTool extends GPCommandLineInterface {
                     if (!args.has(OPT_ACR_RULE)) {
                         System.err.println("Must specify an access rule with -" + OPT_ACR_RULE + " (00, 01 or an apdu filter)");
                     }
-                    if (hash != null && hash.length != 20) {
-                        fail("certificate hash must be 20 bytes");
+                    if (hash != null && (hash.length != 20 && hash.length != 32)) {
+                        fail("certificate hash must be 20 or 32 bytes");
                     }
                     byte[] rules = HexUtils.stringToBin((String) args.valueOf(OPT_ACR_RULE));
                     SEAccessControlUtility.acrAdd(gp, araAid, aid, hash, rules, perm);
@@ -592,8 +592,8 @@ public final class GPTool extends GPCommandLineInterface {
                     byte[] hash = null;
                     if (args.has(OPT_ACR_CERT_HASH)) {
                         hash = HexUtils.stringToBin((String) args.valueOf(OPT_ACR_CERT_HASH));
-                        if (hash.length != 20)
-                            fail("certificate hash must be 20 bytes");
+                        if (hash.length != 20 && hash.length != 32)
+                            fail("certificate hash must be 20 or 32 bytes");
                     }
 
                     SEAccessControlUtility.acrDelete(gp, araAid, aid, hash);
